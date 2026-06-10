@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Checker & Wikipedia Block Status</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner .spin {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner-text {
+            margin-top: 15px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .result-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateX(5px);
+        }
+
+        .info-card.status-blocked {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-left-color: #e74c3c;
+        }
+
+        .info-card.status-clean {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left-color: #2ecc71;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 15px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            font-weight: 600;
+            word-break: break-word;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        .icon-status {
+            font-size: 18px;
+        }
+
+        .block-detail {
+            display: none;
+            background: white;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .block-detail p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .block-detail strong {
+            color: #e74c3c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+        }
+
+        .btn-secondary:hover {
+            background: #e74c3c;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .copy-btn {
+            background: #3498db;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+
+        .copy-btn.copied {
+            background: #2ecc71;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .alert.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: #f5f7fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .stat-box-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-box-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background: #f5f7fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 25px 20px;
+            }
+
+            .header {
+                padding: 30px 20px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .info-value {
+                text-align: left;
+                max-width: 100%;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🔍 IP Checker Pro</h1>
+        <p>Kiểm tra trạng thái IP, VPN và khóa Wikipedia</p>
+    </div>
+
+    <div class="content">
+        <div id="alert" class="alert"></div>
+
+        <div id="spinner" class="spinner">
+            <div class="spin"></div>
+            <div class="spinner-text">Đang quét thông tin IP...</div>
+        </div>
+
+        <div id="resultSection" class="result-section">
+            <div id="mainCard" class="info-card">
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-globe"></i> Địa chỉ IP
+                    </span>
+                    <span class="info-value">
+                        <span id="ipAddress">--</span>
+                        <button class="copy-btn" onclick="copyToClipboard('ipAddress')">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-shield-alt"></i> VPN/Proxy
+                    </span>
+                    <span class="info-value">
+                        <span id="vpnStatus">--</span>
+                        <span class="icon-status" id="vpnIcon"></span>
+                    </span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-wikipedia-w"></i> Trạng thái Wikipedia
+                    </span>
+                    <span class="info-value">
+                        <span id="wikiStatus">--</span>
+                        <span class="icon-status" id="wikiIcon"></span>
+                    </span>
+                </div>
+
+                <div id="blockDetail" class="block-detail">
+                    <p><strong><i class="fas fa-ban"></i> Lý do cấm:</strong></p>
+                    <p id="blockReason" style="color: #666;">-</p>
+                    <p style="margin-top: 10px;"><strong><i class="fas fa-calendar"></i> Hạn cấm:</strong></p>
+                    <p id="blockExpiry" style="color: #666;">-</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-box-value" id="riskLevel">--</div>
+                    <div class="stat-box-label">Mức độ rủi ro</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value" id="checkStatus">--</div>
+                    <div class="stat-box-label">Tổng thể</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="btnCheck" onclick="checkNetwork()">
+                    <i class="fas fa-redo"></i> Quét lại
+                </button>
+                <a id="wikiLink" href="#" target="_blank" class="btn btn-secondary" style="display: none;">
+                    <i class="fas fa-external-link-alt"></i> Xem trên Wikipedia
+                </a>
+            </div>
+        </div>
+
+        <div id="initialSection" style="text-align: center;">
+            <div style="font-size: 60px; margin-bottom: 20px;">🌐</div>
+            <h3 style="color: #667eea; margin-bottom: 15px;">Bắt đầu kiểm tra IP của bạn</h3>
+            <p style="color: #999; margin-bottom: 30px;">Nhấn nút bên dưới để kiểm tra:</p>
+            <button class="btn btn-primary" id="btnStart" onclick="checkNetwork()" style="margin: 0 auto; width: 100%; max-width: 300px;">
+                <i class="fas fa-play-circle"></i> Bắt đầu quét
+            </button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <i class="fas fa-lock"></i> Dữ liệu được xử lý an toàn | Cập nhật: <span id="updateTime">--</span>
+    </div>
+</div>
+
+<script>
+    async function checkNetwork() {
+        const spinner = document.getElementById('spinner');
+        const resultSection = document.getElementById('resultSection');
+        const initialSection = document.getElementById('initialSection');
+        const alert = document.getElementById('alert');
+        const btnCheck = document.getElementById('btnCheck');
+        const btnStart = document.getElementById('btnStart');
+
+        alert.style.display = 'none';
+        spinner.style.display = 'block';
+        resultSection.style.display = 'none';
+        initialSection.style.display = 'none';
+        btnCheck.disabled = true;
+        btnStart.disabled = true;
+
+        try {
+            const response = await fetch('/api/check-ip');
+            
+            if (!response.ok) {
+                throw new Error('Server error');
+            }
+
+            const data = await response.json();
+
+            document.getElementById('ipAddress').innerText = data.ip;
+            
+            const vpnIcon = document.getElementById('vpnIcon');
+            const vpnStatus = document.getElementById('vpnStatus');
+            if (data.isProxy) {
+                vpnStatus.innerText = 'Phát hiện VPN/Proxy 🔒';
+                vpnIcon.innerHTML = '<i class="fas fa-lock" style="color: #e74c3c;"></i>';
+            } else {
+                vpnStatus.innerText = 'An toàn (Mạng thường) ✅';
+                vpnIcon.innerHTML = '<i class="fas fa-check-circle" style="color: #2ecc71;"></i>';
+            }
+
+            const wikiIcon = document.getElementById('wikiIcon');
+            const wikiStatus = document.getElementById('wikiStatus');
+            const mainCard = document.getElementById('mainCard');
+            const blockDetail = document.getElementById('blockDetail');
+            const wikiLink = document.getElementById('wikiLink');
+
+            if (data.isBlocked) {
+                wikiStatus.innerText = 'Đang bị CẤM! ❌';
+                wikiIcon.innerHTML = '<i class="fas fa-times-circle" style="color: #e74c3c;"></i>';
+                mainCard.classList.remove('status-clean');
+                mainCard.classList.add('status-blocked');
+                blockDetail.style.display = 'block';
+                document.getElementById('blockReason').innerText = data.reason || 'Không rõ';
+                document.getElementById('blockExpiry').innerText = data.expiry || 'Vô hạn';
+            } else {
+                wikiStatus.innerText = 'Sạch sẽ ✨';
+                wikiIcon.innerHTML = '<i class="fas fa-check-circle" style="color: #2ecc71;"></i>';
+                mainCard.classList.remove('status-blocked');
+                mainCard.classList.add('status-clean');
+                blockDetail.style.display = 'none';
+            }
+
+            const riskLevel = document.getElementById('riskLevel');
+            const checkStatus = document.getElementById('checkStatus');
+            
+            if (data.isBlocked) {
+                riskLevel.innerText = '🔴 Cao';
+                riskLevel.style.color = '#e74c3c';
+                checkStatus.innerText = '⚠️ Nguy hiểm';
+                checkStatus.style.color = '#e74c3c';
+            } else if (data.isProxy) {
+                riskLevel.innerText = '🟡 Trung bình';
+                riskLevel.style.color = '#f39c12';
+                checkStatus.innerText = '⚠️ Cảnh báo';
+                checkStatus.style.color = '#f39c12';
+            } else {
+                riskLevel.innerText = '🟢 Thấp';
+                riskLevel.style.color = '#2ecc71';
+                checkStatus.innerText = '✅ An toàn';
+                checkStatus.style.color = '#2ecc71';
+            }
+
+            wikiLink.href = data.wikiLink;
+            wikiLink.style.display = 'inline-flex';
+
+            document.getElementById('updateTime').innerText = new Date().toLocaleTimeString('vi-VN');
+
+            spinner.style.display = 'none';
+            resultSection.style.display = 'block';
+            initialSection.style.display = 'none';
+
+        } catch (error) {
+            console.error(error);
+            alert.className = 'alert error';
+            alert.innerHTML = '<i class="fas fa-exclamation-circle"></i> Lỗi kết nối: ' + error.message;
+            alert.style.display = 'block';
+            
+            spinner.style.display = 'none';
+            initialSection.style.display = 'block';
+            resultSection.style.display = 'none';
+        } finally {
+            btnCheck.disabled = false;
+            btnStart.disabled = false;
+        }
+    }
+
+    function copyToClipboard(elementId) {
+        const text = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.target.closest('.copy-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Đã copy!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
