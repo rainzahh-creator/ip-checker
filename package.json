@@ -1,13 +1,13 @@
 {
-  "name": "ip-checker-pro",
-  "version": "2.0.0",
-  "description": "IP Checker & Wikipedia Block Status - Professional Version",
+  "name": "ip-checker-pro-advanced",
+  "version": "2.5.0",
+  "description": "Advanced IP Checker with Geolocation, Security Analysis & Bypass Tips",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": ["ip-checker", "wikipedia", "vpn-detector"],
+  "keywords": ["ip-checker", "wikipedia", "geolocation", "security", "bypass"],
   "author": "",
   "license": "MIT",
   "dependencies": {
