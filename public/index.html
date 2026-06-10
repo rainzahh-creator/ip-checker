@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP Checker & Wikipedia Block Status</title>
+    <title>IP Checker Pro - Advanced</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -28,7 +29,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 600px;
+            max-width: 900px;
             overflow: hidden;
             animation: slideUp 0.6s ease-out;
         }
@@ -63,19 +64,65 @@
         }
 
         .content {
-            padding: 40px 30px;
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .spinner {
             display: none;
             text-align: center;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
         .spinner .spin {
             display: inline-block;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
             border-radius: 50%;
@@ -91,16 +138,6 @@
             margin-top: 15px;
             color: #667eea;
             font-weight: 600;
-        }
-
-        .result-section {
-            display: none;
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
         .info-card {
@@ -130,7 +167,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 15px 0;
+            margin: 12px 0;
             font-size: 15px;
         }
 
@@ -147,30 +184,132 @@
             font-weight: 600;
             word-break: break-word;
             text-align: right;
-            max-width: 60%;
         }
 
-        .icon-status {
-            font-size: 18px;
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
         }
 
-        .block-detail {
-            display: none;
+        .stat-box {
             background: white;
-            border-left: 4px solid #e74c3c;
             padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .map-container {
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 2px solid #e0e0e0;
+        }
+
+        .security-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .security-item.danger {
+            border-left-color: #e74c3c;
+        }
+
+        .security-item.warning {
+            border-left-color: #f39c12;
+        }
+
+        .security-item.safe {
+            border-left-color: #2ecc71;
+        }
+
+        .security-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .security-icon {
+            font-size: 20px;
+        }
+
+        .security-info {
+            flex: 1;
+        }
+
+        .security-name {
+            font-weight: 600;
             font-size: 14px;
         }
 
-        .block-detail p {
-            margin: 10px 0;
-            line-height: 1.6;
+        .security-desc {
+            font-size: 12px;
+            color: #999;
+            margin-top: 3px;
         }
 
-        .block-detail strong {
-            color: #e74c3c;
+        .security-result {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .bypass-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .bypass-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bypass-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bypass-list li {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bypass-list li:before {
+            content: "✓";
+            font-weight: 700;
         }
 
         .action-buttons {
@@ -195,7 +334,6 @@
             justify-content: center;
             gap: 8px;
             text-decoration: none;
-            white-space: nowrap;
         }
 
         .btn-primary {
@@ -214,37 +352,6 @@
             transform: none;
         }
 
-        .btn-secondary {
-            background: white;
-            color: #e74c3c;
-            border: 2px solid #e74c3c;
-        }
-
-        .btn-secondary:hover {
-            background: #e74c3c;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .copy-btn {
-            background: #3498db;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: 0.3s;
-        }
-
-        .copy-btn:hover {
-            background: #2980b9;
-        }
-
-        .copy-btn.copied {
-            background: #2ecc71;
-        }
-
         .alert {
             padding: 15px;
             border-radius: 10px;
@@ -254,61 +361,16 @@
             animation: slideDown 0.3s ease;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         .alert.error {
             background: #ffebee;
             color: #c62828;
             border-left: 4px solid #e74c3c;
         }
 
-        .alert.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 4px solid #2ecc71;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .stat-box {
-            background: #f5f7fa;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid #e0e0e0;
-        }
-
-        .stat-box-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-        .stat-box-label {
-            font-size: 12px;
-            color: #999;
-            margin-top: 5px;
-            text-transform: uppercase;
-        }
-
         .divider {
             height: 1px;
             background: #e0e0e0;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
         .footer {
@@ -320,36 +382,52 @@
             border-top: 1px solid #e0e0e0;
         }
 
-        @media (max-width: 600px) {
+        .copy-btn {
+            background: #3498db;
+            color: white;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+
+        .risk-meter {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .risk-meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71 0%, #f39c12 50%, #e74c3c 100%);
+            transition: width 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
             .content {
-                padding: 25px 20px;
-            }
-
-            .header {
-                padding: 30px 20px 20px;
-            }
-
-            .header h1 {
-                font-size: 24px;
+                padding: 20px;
             }
 
             .info-item {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 8px;
-            }
-
-            .info-value {
-                text-align: left;
-                max-width: 100%;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                min-width: 100%;
             }
         }
     </style>
@@ -358,8 +436,8 @@
 
 <div class="container">
     <div class="header">
-        <h1>🔍 IP Checker Pro</h1>
-        <p>Kiểm tra trạng thái IP, VPN và khóa Wikipedia</p>
+        <h1>🔍 IP Checker Pro - Advanced</h1>
+        <p>Kiểm tra IP, Geolocation, Security & Bypass Tips</p>
     </div>
 
     <div class="content">
@@ -370,77 +448,167 @@
             <div class="spinner-text">Đang quét thông tin IP...</div>
         </div>
 
-        <div id="resultSection" class="result-section">
-            <div id="mainCard" class="info-card">
-                <div class="info-item">
-                    <span class="info-label">
-                        <i class="fas fa-globe"></i> Địa chỉ IP
-                    </span>
-                    <span class="info-value">
-                        <span id="ipAddress">--</span>
-                        <button class="copy-btn" onclick="copyToClipboard('ipAddress')">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                    </span>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="info-item">
-                    <span class="info-label">
-                        <i class="fas fa-shield-alt"></i> VPN/Proxy
-                    </span>
-                    <span class="info-value">
-                        <span id="vpnStatus">--</span>
-                        <span class="icon-status" id="vpnIcon"></span>
-                    </span>
-                </div>
-
-                <div class="info-item">
-                    <span class="info-label">
-                        <i class="fas fa-wikipedia-w"></i> Trạng thái Wikipedia
-                    </span>
-                    <span class="info-value">
-                        <span id="wikiStatus">--</span>
-                        <span class="icon-status" id="wikiIcon"></span>
-                    </span>
-                </div>
-
-                <div id="blockDetail" class="block-detail">
-                    <p><strong><i class="fas fa-ban"></i> Lý do cấm:</strong></p>
-                    <p id="blockReason" style="color: #666;">-</p>
-                    <p style="margin-top: 10px;"><strong><i class="fas fa-calendar"></i> Hạn cấm:</strong></p>
-                    <p id="blockExpiry" style="color: #666;">-</p>
-                </div>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-box-value" id="riskLevel">--</div>
-                    <div class="stat-box-label">Mức độ rủi ro</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-box-value" id="checkStatus">--</div>
-                    <div class="stat-box-label">Tổng thể</div>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-primary" id="btnCheck" onclick="checkNetwork()">
-                    <i class="fas fa-redo"></i> Quét lại
+        <div id="resultSection" style="display: none;">
+            <!-- TABS -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('overview')">
+                    <i class="fas fa-info-circle"></i> Tổng quan
                 </button>
-                <a id="wikiLink" href="#" target="_blank" class="btn btn-secondary" style="display: none;">
-                    <i class="fas fa-external-link-alt"></i> Xem trên Wikipedia
-                </a>
+                <button class="tab-btn" onclick="switchTab('geolocation')">
+                    <i class="fas fa-globe"></i> Địa chỉ
+                </button>
+                <button class="tab-btn" onclick="switchTab('security')">
+                    <i class="fas fa-shield-alt"></i> Bảo mật
+                </button>
+                <button class="tab-btn" onclick="switchTab('bypass')">
+                    <i class="fas fa-unlock"></i> Bypass
+                </button>
+            </div>
+
+            <!-- TAB 1: OVERVIEW -->
+            <div id="overview" class="tab-content active">
+                <div class="info-card" id="mainCard">
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-globe"></i> IP Address</span>
+                        <span class="info-value">
+                            <span id="ipAddress">--</span>
+                            <button class="copy-btn" onclick="copyToClipboard('ipAddress')">Copy</button>
+                        </span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-map-marker-alt"></i> Vị trí</span>
+                        <span class="info-value" id="locationDisplay">--</span>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-building"></i> ISP/Nhà mạng</span>
+                        <span class="info-value" id="ispDisplay">--</span>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-shield-alt"></i> VPN/Proxy</span>
+                        <span class="info-value">
+                            <span id="vpnStatus">--</span>
+                            <span id="vpnIcon"></span>
+                        </span>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-wikipedia-w"></i> Wikipedia Block</span>
+                        <span class="info-value">
+                            <span id="wikiStatus">--</span>
+                            <span id="wikiIcon"></span>
+                        </span>
+                    </div>
+
+                    <div id="blockDetail" style="display: none; background: white; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #e74c3c;">
+                        <p><strong>Lý do cấm:</strong> <span id="blockReason">-</span></p>
+                        <p style="margin-top: 8px;"><strong>Hạn cấm:</strong> <span id="blockExpiry">-</span></p>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="stat-box">
+                        <div class="stat-value" id="riskLevel">--</div>
+                        <div class="stat-label">Mức độ rủi ro</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="checkStatus">--</div>
+                        <div class="stat-label">Tổng thể</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: GEOLOCATION -->
+            <div id="geolocation" class="tab-content">
+                <div class="map-container" id="map"></div>
+
+                <div class="grid-2">
+                    <div class="info-card">
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-flag"></i> Quốc gia</span>
+                            <span class="info-value" id="country">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-city"></i> Thành phố</span>
+                            <span class="info-value" id="city">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-map"></i> Vùng</span>
+                            <span class="info-value" id="region">--</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-compass"></i> Tọa độ</span>
+                            <span class="info-value" id="coordinates">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-tachometer-alt"></i> Múi giờ</span>
+                            <span class="info-value" id="timezone">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-wifi"></i> ISP</span>
+                            <span class="info-value" id="isp">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-tachometer-alt"></i> Tốc độ Internet</span>
+                        <span class="info-value" id="speed">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-hdd"></i> Loại kết nối</span>
+                        <span class="info-value" id="connectionType">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SECURITY -->
+            <div id="security" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 10px; font-size: 16px;">Risk Score</h3>
+                    <div class="risk-meter">
+                        <div class="risk-meter-fill" id="riskMeterFill"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+                        <span>An toàn</span>
+                        <span id="riskScore">0/100</span>
+                        <span>Nguy hiểm</span>
+                    </div>
+                </div>
+
+                <div id="securityList">
+                    <!-- Security items sẽ được insert ở đây -->
+                </div>
+            </div>
+
+            <!-- TAB 4: BYPASS -->
+            <div id="bypass" class="tab-content">
+                <div id="bypassSection">
+                    <!-- Bypass recommendations sẽ được insert ở đây -->
+                </div>
             </div>
         </div>
 
         <div id="initialSection" style="text-align: center;">
             <div style="font-size: 60px; margin-bottom: 20px;">🌐</div>
-            <h3 style="color: #667eea; margin-bottom: 15px;">Bắt đầu kiểm tra IP của bạn</h3>
-            <p style="color: #999; margin-bottom: 30px;">Nhấn nút bên dưới để kiểm tra:</p>
+            <h3 style="color: #667eea; margin-bottom: 15px;">Bắt đầu kiểm tra IP</h3>
+            <p style="color: #999; margin-bottom: 30px;">Nhấn nút để quét thông tin chi tiết</p>
             <button class="btn btn-primary" id="btnStart" onclick="checkNetwork()" style="margin: 0 auto; width: 100%; max-width: 300px;">
                 <i class="fas fa-play-circle"></i> Bắt đầu quét
+            </button>
+        </div>
+
+        <div class="action-buttons" id="actionButtons" style="display: none; margin-top: 30px;">
+            <button class="btn btn-primary" id="btnCheck" onclick="checkNetwork()">
+                <i class="fas fa-redo"></i> Quét lại
             </button>
         </div>
     </div>
@@ -450,7 +618,44 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
+    let map = null;
+    let marker = null;
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.getElementById(tabName).classList.add('active');
+        event.target.closest('.tab-btn').classList.add('active');
+
+        if (tabName === 'geolocation' && !map) {
+            setTimeout(initMap, 100);
+        }
+    }
+
+    function initMap() {
+        const lat = parseFloat(document.getElementById('coordinates').dataset.lat) || 21.0285;
+        const lng = parseFloat(document.getElementById('coordinates').dataset.lng) || 105.8542;
+
+        if (map) {
+            map.setView([lat, lng], 10);
+            if (marker) marker.setLatLng([lat, lng]);
+        } else {
+            map = L.map('map').setView([lat, lng], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+            marker = L.marker([lat, lng]).addTo(map);
+        }
+    }
+
     async function checkNetwork() {
         const spinner = document.getElementById('spinner');
         const resultSection = document.getElementById('resultSection');
@@ -458,32 +663,33 @@
         const alert = document.getElementById('alert');
         const btnCheck = document.getElementById('btnCheck');
         const btnStart = document.getElementById('btnStart');
+        const actionButtons = document.getElementById('actionButtons');
 
         alert.style.display = 'none';
         spinner.style.display = 'block';
         resultSection.style.display = 'none';
         initialSection.style.display = 'none';
+        actionButtons.style.display = 'none';
         btnCheck.disabled = true;
         btnStart.disabled = true;
 
         try {
             const response = await fetch('/api/check-ip');
-            
-            if (!response.ok) {
-                throw new Error('Server error');
-            }
-
+            if (!response.ok) throw new Error('Server error');
             const data = await response.json();
 
+            // ========== OVERVIEW TAB ==========
             document.getElementById('ipAddress').innerText = data.ip;
-            
+            document.getElementById('locationDisplay').innerText = `${data.city || 'Unknown'}, ${data.country || 'Unknown'}`;
+            document.getElementById('ispDisplay').innerText = data.isp || 'Unknown';
+
             const vpnIcon = document.getElementById('vpnIcon');
             const vpnStatus = document.getElementById('vpnStatus');
             if (data.isProxy) {
                 vpnStatus.innerText = 'Phát hiện VPN/Proxy 🔒';
                 vpnIcon.innerHTML = '<i class="fas fa-lock" style="color: #e74c3c;"></i>';
             } else {
-                vpnStatus.innerText = 'An toàn (Mạng thường) ✅';
+                vpnStatus.innerText = 'An toàn ✅';
                 vpnIcon.innerHTML = '<i class="fas fa-check-circle" style="color: #2ecc71;"></i>';
             }
 
@@ -491,16 +697,15 @@
             const wikiStatus = document.getElementById('wikiStatus');
             const mainCard = document.getElementById('mainCard');
             const blockDetail = document.getElementById('blockDetail');
-            const wikiLink = document.getElementById('wikiLink');
 
             if (data.isBlocked) {
-                wikiStatus.innerText = 'Đang bị CẤM! ❌';
+                wikiStatus.innerText = 'Bị CẤM ❌';
                 wikiIcon.innerHTML = '<i class="fas fa-times-circle" style="color: #e74c3c;"></i>';
                 mainCard.classList.remove('status-clean');
                 mainCard.classList.add('status-blocked');
                 blockDetail.style.display = 'block';
-                document.getElementById('blockReason').innerText = data.reason || 'Không rõ';
-                document.getElementById('blockExpiry').innerText = data.expiry || 'Vô hạn';
+                document.getElementById('blockReason').innerText = data.reason || 'Unknown';
+                document.getElementById('blockExpiry').innerText = data.expiry || 'Forever';
             } else {
                 wikiStatus.innerText = 'Sạch sẽ ✨';
                 wikiIcon.innerHTML = '<i class="fas fa-check-circle" style="color: #2ecc71;"></i>';
@@ -511,7 +716,6 @@
 
             const riskLevel = document.getElementById('riskLevel');
             const checkStatus = document.getElementById('checkStatus');
-            
             if (data.isBlocked) {
                 riskLevel.innerText = '🔴 Cao';
                 riskLevel.style.color = '#e74c3c';
@@ -529,24 +733,64 @@
                 checkStatus.style.color = '#2ecc71';
             }
 
-            wikiLink.href = data.wikiLink;
-            wikiLink.style.display = 'inline-flex';
+            // ========== GEOLOCATION TAB ==========
+            document.getElementById('country').innerText = data.country || 'Unknown';
+            document.getElementById('city').innerText = data.city || 'Unknown';
+            document.getElementById('region').innerText = data.region || 'Unknown';
+            const coordElem = document.getElementById('coordinates');
+            coordElem.innerText = `${data.latitude || 'N/A'}, ${data.longitude || 'N/A'}`;
+            coordElem.dataset.lat = data.latitude;
+            coordElem.dataset.lng = data.longitude;
+            document.getElementById('timezone').innerText = data.timezone || 'Unknown';
+            document.getElementById('isp').innerText = data.isp || 'Unknown';
+            document.getElementById('speed').innerText = data.mobile ? '4G/5G Mobile' : 'Broadband';
+            document.getElementById('connectionType').innerText = data.mobile ? 'Mobile' : 'Fixed';
+
+            // ========== SECURITY TAB ==========
+            document.getElementById('riskScore').innerText = `${data.securityScore}/100`;
+            const riskMeterFill = document.getElementById('riskMeterFill');
+            riskMeterFill.style.width = `${data.securityScore}%`;
+
+            const securityList = document.getElementById('securityList');
+            securityList.innerHTML = data.securityChecks.map(check => `
+                <div class="security-item ${check.status}">
+                    <div class="security-status">
+                        <div class="security-icon">${check.icon}</div>
+                        <div class="security-info">
+                            <div class="security-name">${check.name}</div>
+                            <div class="security-desc">${check.description}</div>
+                        </div>
+                    </div>
+                    <div class="security-result">${check.result}</div>
+                </div>
+            `).join('');
+
+            // ========== BYPASS TAB ==========
+            const bypassSection = document.getElementById('bypassSection');
+            bypassSection.innerHTML = data.bypassRecommendations.map((rec, idx) => `
+                <div class="bypass-card">
+                    <div class="bypass-title">${rec.icon} ${rec.title}</div>
+                    <p style="font-size: 13px; margin-bottom: 10px; opacity: 0.9;">${rec.description}</p>
+                    <ul class="bypass-list">
+                        ${rec.tips.map(tip => `<li>${tip}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
 
             document.getElementById('updateTime').innerText = new Date().toLocaleTimeString('vi-VN');
 
             spinner.style.display = 'none';
             resultSection.style.display = 'block';
             initialSection.style.display = 'none';
+            actionButtons.style.display = 'flex';
 
         } catch (error) {
             console.error(error);
             alert.className = 'alert error';
-            alert.innerHTML = '<i class="fas fa-exclamation-circle"></i> Lỗi kết nối: ' + error.message;
+            alert.innerHTML = '<i class="fas fa-exclamation-circle"></i> Lỗi: ' + error.message;
             alert.style.display = 'block';
-            
             spinner.style.display = 'none';
             initialSection.style.display = 'block';
-            resultSection.style.display = 'none';
         } finally {
             btnCheck.disabled = false;
             btnStart.disabled = false;
@@ -556,13 +800,11 @@
     function copyToClipboard(elementId) {
         const text = document.getElementById(elementId).innerText;
         navigator.clipboard.writeText(text).then(() => {
-            const btn = event.target.closest('.copy-btn');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i> Đã copy!';
-            btn.classList.add('copied');
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = '✓ Copied';
             setTimeout(() => {
-                btn.innerHTML = originalHTML;
-                btn.classList.remove('copied');
+                btn.innerText = originalText;
             }, 2000);
         });
     }
